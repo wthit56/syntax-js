@@ -55,155 +55,221 @@ function SYX(code, type) {
   	return code;
 }
 
-SYX["text/javascript"] = function (code) {
-	// while|do|for|return|in|instanceof|function|new|with|typeof|try|catch|finally|null|break|continue|debugger
+SYX["text/javascript"] = (function () {
 
-	//           string                  comment                                              variables
-	//var find = /(("|')((?:\\?.)*?)(\2))|(((\/\/)([^\r\n]*))|((\/\*)((?:\n|.)*?)(\*\/)))|(?:\b(var|let)\b)/g;
+	var part = new String("<span class=\"{class}\">{content}</span>");
+	part.open = new String("<span class=\"{class}\">");
+	part.close = new String("</span>");
 
-	var string = /(("|')((?:\\?[\W\w])*?)(\2))/,
-		comment_single_line = /(\/\/)([^\r\n]*)/,
-		comment_multi_line = /(\/\*)((?:\n|.)*?)(\*\/)/,
-		keywords = /\b(?:var|let|if|else if|else|while|do|for|return|in|instanceof|function|new|with|typeof|try|catch|finally|null|break|continue)\b/,
-		brackets = "{}()",
-		compare_equality = /(?:(!)|=)=(=)?/,
-		compare_relative = /(?:(>)|(<))(=)?/,
-		logical = /(&&)|(\|\|)|(!)/,
-		boolean = /\b(?:true|false)\b/;
+	var parts = [
+		{ // string
+			find: /("|')((?:\\?[\W\w])*?)(\2)/,
+			replace: (function () {
+				var template = new String(
+					part.replace("{class}", "string").replace("{content}",
+						part.replace("{class}", "string left").replace("{content}", "{left}") +
+						part.replace("{class}", "string content").replace("{content}", "{content}") +
+						part.replace("{class}", "string right").replace("{content}", "{right}")
+					)
+				);
 
-	//var keywords = {
-	//	variable: /\b(?:let|var)(?=\s)/,
-	//	ifelse: /\b(?:if|else if|else)\b/
-	//};
+				return function (left, content, right) {
+					return template.replace("{left}", left).replace("{content}", content).replace("{right}", right);
+				};
+			})()
+		},
 
-	var find = new RegExp(
-		string.source + "|" +
-		"((" + comment_single_line.source + ")|(" + comment_multi_line.source + "))|" +
-		"(" + keywords.source + ")|" +
-		"((\\" + brackets.split("").join(")|(\\") + "))|" +
-		"((" + compare_equality.source + ")|(" + compare_relative.source + "))|" +
-		"(" + logical.source + ")|" +
-		"(" + boolean.source + ")",
-	"g");
-	console.log(find);
+		{ // comment
+			find: /((\/\/)([^\r\n]*))|((\/\*)((?:\n|.)*?)(\*\/))/,
+			replace: (function () {
+				var templates = {
+					single: part.replace("{class}", "comment single-line").replace("{content}",
+						part.replace("{class}", "comment left").replace("{content}", "{left}") +
+						part.replace("{class}", "comment content")
+					),
+					multi: part.replace("{class}", "comment multi-line").replace("{content}",
+						part.replace("{class}", "comment left").replace("{content}", "{left}") +
+						part.replace("{class}", "comment content") +
+						part.replace("{class}", "comment right").replace("{content}", "{right}")
+					)
+				};
 
-	var block_depth = 0;
-	code = code.replace(find, function (match,
-		string,
-			stringLeft, stringContent, stringRight,
-		comment,
-			singleLineComment,
-				singleLineCommentLeft, singleLineCommentContent,
-			multiLineComment,
-				multiLineCommentLeft, multiLineCommentContent, multiLineCommentRight,
-		keyword,
-		bracket,
-			blockLeft, blockRight, bracketLeft, bracketRight,
-		comparison,
-			compareEquality,
-				compareNotEqual, compareEqualityStrict,
-			compareRelative,
-				compareLessThan, compareGreaterThan, compareOrEqualTo,
-		logical,
-			logicalAnd, logicalOr, logicalNot,
-		boolean
-	) {
-		console.group(match);
+				return function (
+					is_single, single_left, single_content,
+					is_multi, multi_left, multi_content, multi_right
+				) {
+					if (is_single) {
+						return templates.single.replace("{left}", single_left).replace("{content}", single_content);
+					}
+					else if (is_multi) {
+						return templates.multi.replace("{left}", multi_left).replace("{content}", multi_content).replace("{right}", multi_right);
+					}
+				};
+			})()
+		},
 
-		if (string) {
-			console.log("is String");
-			console.log(stringLeft);
-			console.log(stringContent);
-			console.log(stringRight);
-			console.groupEnd();
-			return (
-				"<span class=\"string\">" +
-					"<span class=\"left\">" + stringLeft + "</span>" +
-					"<span class=\"content\">" + stringContent + "</span>" +
-					"<span class=\"right\">" + stringRight + "</span>" +
-				"</span>"
-			);
-		}
-		else if (comment) {
-			console.log("is Comment");
-			if (singleLineComment != null) {
-				console.log("is Single-Line Comment");
-				console.log(singleLineCommentLeft);
-				console.log(singleLineCommentContent);
-				console.groupEnd();
-				return "<span class=\"comment single\"><span class=\"left\">" + singleLineCommentLeft + "</span><span class=\"content\">" + singleLineCommentContent + "</span></span>";
+		{ // keyword
+			find: /\b(var|let|if|else if|else|while|do|for|return|in|instanceof|function|new|with|typeof|try|catch|finally|null|break|continue)\b/,
+			replace: function (keyword) {
+				return part.replace("{class}", "keyword " + keyword).replace("{content}", keyword);
 			}
-			else if (multiLineComment != null) {
-				console.log("is Multi-Line Comment");
-				console.log(multiLineCommentLeft);
-				console.log(multiLineCommentContent);
-				console.log(multiLineCommentRight);
-				console.groupEnd();
-				return "<span class=\"comment multi\"><span class=\"left\">" + multiLineCommentLeft + "</span><span class=\"content\">" + multiLineCommentContent + "</span><span class=\"right\">" + multiLineCommentRight + "</span></span>";
-			}
-		}
-		else if (keyword) {
-			console.log("is Keyword");
-			console.groupEnd();
-			return "<span class=\"keyword " + keyword + "\">" + keyword + "</span>";
-		}
-		else if (bracket) {
-			console.log("is Bracket");
+		},
 
-			if (blockLeft) {
-				console.log("is Opening Block");
-				block_depth++;
-				console.groupEnd();
-				return "<span class=\"block\"><span class=\"block-left\">" + bracket + "</span><span class=\"block-content\">";
+		{ // boolean
+			find: /\b(true|false)\b/,
+			replace: function (boolean) {
+				return part.replace("{class}", "boolean " + boolean).replace("{content}", boolean);
 			}
-			else if (blockRight) {
-				console.log("is Closing Block");
-				block_depth--;
-				console.groupEnd();
-				return "</span><span class=\"block-right\">" + bracket + "</span></span>";
-			}
-			else if (bracketLeft) {
-				console.log("is Opening Bracket");
-				block_depth++;
-				console.groupEnd();
-				return "<span class=\"paren\"><span class=\"paren-left\">" + bracket + "</span><span class=\"paren-content\">";
-			}
-			else if (bracketRight) {
-				console.log("is Closing Bracket");
-				block_depth--;
-				console.groupEnd();
-				return "</span><span class=\"paren-right\">" + bracket + "</span></span>";
-			}
-		}
-		else if (comparison) {
-			if (compareEquality) {
-				console.groupEnd();
-				return "<span class=\"operator comparison equality" + (compareNotEqual ? " not" : "") + " equal" + (compareEqualityStrict ? " strict" : "") + "\">" + match + "</span>";
-			}
-			else if (compareRelative) {
-				console.log("is Relative Compare");
-				console.groupEnd();
-				return "<span class=\"operator comparison relative" + (compareLessThan ? " less-than" : "") + (compareGreaterThan ? " greater-than" : "") + (compareOrEqualTo ? " or-equal-to" : "") + "\">" + match + "</span>";
-			}
-		}
-		else if (logical) {
-			console.groupEnd();
-			return "<span class=\"operator logical " + (logicalAnd ? "and" : logicalOr ? "or" : logicalNot ? "not" : "") + "\">" + match + "</span>";
-		}
-		else if (boolean) {
-			console.groupEnd();
-			return "<span class=\"boolean "+match+"\">"+match+"</span>";			
-		}
+		},
 
-		//console.log(arguments);
-		console.groupEnd();
+		{ // operator
+			find: (function () {
+				//var crement = ,
+				//	comparison = {
+				//		equality: ,
+				//		relative: 
+				//	},
+				//	logical = 
+				//	arithmetic = ,
+				//	bit = 
+				//	assignment = /=/,
+				//	conditional = ,
+				//	comma = /,/;
 
-		return match;
-	});
+				return new RegExp(
+					"((" +
+					[
+						/\+\+|--/.source, // other
+				// assignable
+							"(?:(" + /\+|-|\*|\/|%/.source + ")" + // arithmetic
+							"|(" + /&|\||\^|~|<<|>>>|>>/.source + ")|\b)" + // bitwise
+							"(=)?", // assigning,
+						/=/.source, // assignment
+						/((?:(!)|=)=(=)?)|((<|>)(=)?)/.source, // comparison
+						/&&|\|\||!/.source, // logical
+						/[\?:,]/.source // other
+					].join(")|(") +
+					"))",
+				"g");
+			})(),
+			replace: function (
+				operator,
+				crement,
+				assignable,
+					arithmetic, bitwise,
+					assigning,
+				assignment,
+				comparison,
+					equality, not, strict,
+					relative, than, or_equal_to,
+				logical,
+				other
+			) {
+				var names = {
+					"++": "increment",
+					"--": "decrement",
 
-	if (block_depth > 0) {
-		code += new Array(block_depth + 1).join("</span>");
+					"+": "add",
+					"-": "subtract",
+					"*": "multiply",
+					"/": "divide",
+
+					"&": "and",
+					"|": "or",
+					"^": "xor",
+					"~": "not",
+					"<<": "shift-left",
+					">>": "shift-right",
+					">>>": "shift-right-zero-fill",
+
+					"&&": "and",
+					"||": "or",
+					"!": "not",
+
+					">": "greater-than",
+					"<": "less-than",
+
+					"=": "assign",
+
+					"?": "conditional",
+					":": "colon",
+					",": "comma"
+				};
+				var name = "operator";
+
+				if (crement || logical) {
+					if (crement) { name += " crement"; }
+					else if (logical) { name += " logical"; }
+
+					name += " " + names[crement || logical];
+				}
+				else if (comparison) {
+					name += " comparison" + (
+						equality ? (
+								(not ? " not" : "") +
+								(equality ? " equality" : "") +
+								(strict ? " strict" : "")
+						)
+						: relative ? (
+								" " + (names[than]) +
+								(or_equal_to ? " or-equal-to" : "")
+						)
+						: ""
+					);
+				}
+				else if (assignable) {
+					if (arithmetic) { name += " arithmetic"; }
+					else if (bitwise) { name += " bitwise"; }
+
+					if (arithmetic || bitwise) { name += " " + names[arithmetic || bitwise]; }
+					if (assigning) { name += " assigning"; }
+				}
+				else if (assignment) { name += " assignment"; }
+				else if (other) {
+					name += " " + names[other];
+				}
+
+				return part.replace("{class}", name).replace("{content}", operator);
+			}
+		},
+
+		{ // dot property accessor
+			find: /(\.(?=\D))/,
+			replace: function (match) {
+				return part.replace("{class}", "property-accessor dot").replace("{content}", match);
+			}
+		},
+
+	//{ // bracket property accessor
+	//	find:/\[|\]/
+	//}
+
+	// member
+	];
+
+	var slice = Array.prototype.slice;
+
+	var p, find = [], replace, replacers = {}, last = 1;
+	for (var i = 0, l = parts.length; i < l; i++) {
+		p = parts[i];
+		find.push(p.find.source);
+		replacers[last] = p.replace;
+		last += 1 + p.replace.length;
 	}
+	console.log(replacers);
 
-	return code;
-};
+
+	find = new RegExp("(" + find.join(")|(") + ")", "g");
+	console.log(find);
+	replace = function () {
+		for (var index in replacers) {
+			if (arguments[index] !== undefined) {
+				return replacers[index].apply(this, slice.call(arguments, +index + 1, +index + 1 + replacers[index].length));
+			}
+		}
+	};
+
+	return function (code) {
+		return code.replace(find, replace);
+	};
+})();
