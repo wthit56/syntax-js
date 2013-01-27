@@ -68,6 +68,7 @@ if (!window.Syntax) {
 						code = trimLines.call(code);
 						code = removeIndent.call(code);
 					}
+
 					if (spaces) {
 						code = code || c.innerHTML;
 						code = useSpaces.call(code, +spaces);

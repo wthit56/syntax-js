@@ -32,6 +32,12 @@
 			code .boolean {font-style:italic;}
 		</style>
 
+		<code justify tab-width="2">
+			if(true){
+				console.log("justified");
+			}
+		</code>
+
 		<code id="test1" class="block" type="text/javascript" justify>
 			"use strict"; // single-line comment "string"
 			"
@@ -50,6 +56,9 @@
 
 			{ "code block" }
 			{ object: "literal" }
+			{ condition ? true : false }
+			{ block }
+			{ document.title: "invalid object" }
 
 			1 == 1
 			1 != 1
@@ -65,7 +74,8 @@
 			1 || 1
 			!(false)
 			
-			true, false
+			true
+			false
 			
 			1 + 1 - 1 * 1 / 1 % 1
 			+= -= *= /= %=
@@ -77,7 +87,6 @@
 			[1, 2]
 
 			object.property
-			0.1
 			object[property]
 
 			/regexp\/pattern/gmyi
@@ -87,10 +96,13 @@
 			010
 			1234567890
 			1234567890.0987654321
+
+			null
+			undefined
 		</code>
 
-		<script src="Replacer.js" type="text/javascript"></script>
+		<script src="../Replacer.js" type="text/javascript"></script>
+		<script src="../Syntax.js" type="text/javascript"></script>
 		<script src=".js" type="text/javascript"></script>
-		<script src="javascript.js" type="text/javascript"></script>
     </body>
 </html>

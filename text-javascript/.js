@@ -153,7 +153,7 @@ window.Syntax["text/javascript"] = (function () {
 		},
 
 		{ // keyword
-			find: /\b(var|let|if|else if|else|while|do|for|return|in|instanceof|function|new|with|typeof|try|catch|finally|null|break|continue)\b/,
+			find: /\b(var|let|if|else if|else|while|do|for|return|in|instanceof|function|new|with|typeof|try|catch|finally|null|undefined|break|continue)\b/,
 			replace: function (keyword) {
 				return part.replace("{class}", "keyword " + keyword).replace("{content}", keyword);
 			}
@@ -343,7 +343,7 @@ window.Syntax["text/javascript"] = (function () {
 		},
 
 		{ // curly brace
-			find: /(\{)(?=[\W\w]*?(?:(:)|[;}]))|(\})/,
+			find: /(\{)(?=[\W\w]*?(?:(:)|[;}?.]))|(\})/,
 			replace: (function () {
 				var type, typeNesting = [];
 
