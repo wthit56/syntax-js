@@ -24,7 +24,7 @@ window.Syntax["text/javascript"] = (function () {
 
 	return Replacer.aggregate(
 		{ // string
-			find: /("|')((?:[\W\w]*?(?:\\\")?)*?)(\1)/,
+			find: /("|')((?:[\W\w]*?(?:\\\1)?)*?)(\1)/,
 			replace: (function () {
 				var template = new String(
 					part.replace("{class}", "string").replace("{content}",
@@ -35,6 +35,7 @@ window.Syntax["text/javascript"] = (function () {
 				);
 
 				return function (match, left, content, right) {
+					debugger;
 					return template.replace("{left}", left).replace("{content}", content).replace("{right}", Text(right));
 				};
 			})()
@@ -135,6 +136,13 @@ window.Syntax["text/javascript"] = (function () {
 						return part.replace("{class}", "number integer")
 							.replace("{content}", integer);
 					}
+				}
+			},
+			{ // Infinity
+				find: /Infinity/,
+				replace: function (match) {
+					return part.replace("{class}", "number keyword infinity")
+						.replace("{content}", match);
 				}
 			}
 		),

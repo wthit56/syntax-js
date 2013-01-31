@@ -1,119 +1,202 @@
-// console shim
-(function () {
-	if (!window.console) { window.console = {}; }
-	if (!console.log) { console.log = function () { }; }
-	if (!console.group) { console.group = function () { console.log(name); }; }
-	if (!console.groupCollapsed) { console.groupCollapsed = console.group; }
-	if (!console.groupEnd) { console.groupEnd = function () { }; }
-})();
-
 if (!window.Syntax) {
 	window.Syntax = (function () {
-		var removeIndent = (function () {
-			var shortestIndent = -1, tabs = /^(\t*)\S/gm, match,
-  				find = /[\w\W]*/g, replace = "";
+		var all = (function () {
+			return function all(codes, action) {
+				if (codes == null) { codes = document.getElementsByTagName("CODE"); }
 
-			return function removeIndent() {
-				shortestIndent = -1, tabs.lastIndex = 0;
-				match = tabs.exec(this);
-				while (match) {
-					if ((shortestIndent < 0) || (shortestIndent > match[0].length)) {
-						shortestIndent = match[1].length;
-					}
-					match = tabs.exec(this);
-				}
-				find = new RegExp("^\\t{" + shortestIndent + "}", "gm");
-				return this.replace(find, replace);
-				match = null;
-			};
-		})();
-
-		var trimLines = (function () {
-			var find = /^[^\S\t]*|\s*$/g, replace = "";
-
-			return function trimLines() {
-				return this.replace(find, replace);
-			};
-		})();
-
-		var useSpaces = (function () {
-			var find = /\t/g, replace = "    ";
-
-			return function useSpaces(tabWidth) {
-				if (tabWidth == null) { tabWidth = 4; }
-				if (replace.length != tabWidth) { replace = new Array(tabWidth + 1).join(" "); }
-				return this.replace(find, replace);
-			};
-		})();
-
-
-		function Syntax(code, type) {
-			return (Syntax[type])
-				? Syntax[type](code)
-				: code;
-		}
-
-		Syntax.renderAll = (function () {
-			var codes, code = null, type, spaces,
-				i, c, l;
-
-			function align() {
 				i = 0, l = codes.length;
 				while (i < l) {
-					c = codes[i];
-					spaces = c.getAttribute("tab-width");
-
-					if (c.getAttribute("justify") != null) {
-						code = c.innerHTML;
-						code = trimLines.call(code);
-						code = removeIndent.call(code);
-					}
-
-					if (spaces) {
-						code = code || c.innerHTML;
-						code = useSpaces.call(code, +spaces);
-					}
-
-					if (code != null) { c.innerHTML = code; }
-
-					code = null;
-
+					action(codes[i]);
 					i++;
 				}
-			}
-
-			function render() {
-				i = 0;
-				while (i < l) {
-					c = codes[i];
-					type = codes[i].getAttribute("type");
-
-					if (type) {
-						c.innerHTML = Syntax(
-							c.innerHTML
-								.replace(/&lt;/g, "<")
-								.replace(/&gt;/g, ">")
-								.replace(/&amp;/g, "&"),
-							type
-						);
-					}
-
-					i++;
-				}
-
-				codes = null;
-			}
-
-			return function renderAll() {
-				codes = document.getElementsByTagName("code");
-				align();
-				setTimeout(render, 0);
 			};
 		})();
 
-		function load() { Syntax.renderAll(); }
-		if (window.attachEvent) { window.attachEvent("load", load); }
-		if (window.addEventListener) { window.addEventListener("load", load); }
+		var tabSize = (function () {
+			var s = document.body.style;
+			if ("tabSize" in s) { return "tabSize"; }
+			else if ("OTabSize" in s) { return "OTabSize"; }
+			else if ("MozTabSize" in s) { return "MozTabSize"; }
+			else { return null; }
+		})();
+
+		var unescapeHTML = (function () {
+			var find = /(&lt;)|(&gt;)|(&amp;)|(&nbsp;)/g,
+				replace = function (match, lt, gt, amp) {
+					if (lt) { return "<"; }
+					else if (gt) { return ">"; }
+					else if (amp) { return "&"; }
+					else if (nbsp) { return " "; }
+				};
+
+			return function unescapeHTML(input) {
+				return input.replace(find, replace);
+			};
+		})();
+
+		function queueRenderJob(codeElement) {
+			return setTimeout(function () {
+				Syntax.render(codeElement);
+			}, 0);
+		}
+
+		var Syntax = (function () {
+			var spaces, type, newCode;
+			var codeType;
+
+			function Syntax(code, type) {
+				codeType = typeof (code);
+
+				if ((codeType === "object") && (code.getAttribute)) {
+					if (code.getAttribute) {
+						Syntax.layout(code);
+						queueRenderJob(code);
+						return;
+					}
+				}
+				else if (codeType === "string") {
+					if (type != null) {
+						code = Syntax.layout.justify(code);
+						return Syntax.render.string(code, type);
+					}
+					else { return code; }
+				}
+				else {
+					throw new TypeError("Parameter 'code' must be a HTML Element or a string.");
+				}
+			};
+			Syntax.all = function (codes) { return all(codes, Syntax); }
+
+			return Syntax;
+		})();
+
+		Syntax.layout = (function () {
+			var newCode, spaces;
+
+			function Syntax_layout(codeElement) {
+				newCode = codeElement.innerHTML;
+
+				if (codeElement.getAttribute("justify") != null) {
+					newCode = Syntax.layout.justify(newCode);
+				}
+
+				spaces = codeElement.getAttribute("tab-size");
+				if (spaces != null) {
+					if (tabSize != null) {
+						codeElement.style[tabSize] = spaces;
+					}
+					else {
+						spaces = +spaces;
+						newCode = Syntax.layout.tabSize(newCode, spaces);
+					}
+				}
+
+				codeElement.innerHTML = newCode;
+				newCode = "";
+			};
+
+			//			var removeIndent = (function () {
+			//	var shortestIndent = -1, tabs = /^(\t*)\S/gm, match,
+			//				find = /[\w\W]*/g, replace = "";
+
+			//	return function removeIndent() {
+			//		shortestIndent = -1, tabs.lastIndex = 0;
+			//		match = tabs.exec(this);
+			//		while (match) {
+			//			if ((shortestIndent < 0) || (shortestIndent > match[0].length)) {
+			//				shortestIndent = match[1].length;
+			//			}
+			//			match = tabs.exec(this);
+			//		}
+			//		find = new RegExp("^\\t{" + shortestIndent + "}", "gm");
+			//		return this.replace(find, replace);
+			//	};
+			//})();
+
+			//var trimLines = (function () {
+			//	var find = /^[^\S\t]*|\s*$/g, replace = "";
+
+			//	return function trimLines() {
+			//		return this.replace(find, replace);
+			//	};
+			//})();
+
+			//var useSpaces = (function () {
+			//	var find = /\t/g, replace = "    ";
+
+			//	return function useSpaces(tabWidth) {
+			//		if (tabWidth == null) { tabWidth = 4; }
+			//		if (replace.length != tabWidth) { replace = new Array(tabWidth + 1).join(" "); }
+			//		return this.replace(find, replace);
+			//	};
+			//})();
+
+			Syntax_layout.justify = (function () {
+				var find = /^[^\S\t]*|\s*$/g, replace = "";
+				var indent, tabs,
+					findIndent = /^\t+(?=\S)/gm, indentFind;
+
+				return function Syntax_justify(code) {
+					code = code.replace(find, replace);
+
+					indent = Infinity;
+					tabs = findIndent.exec(code);
+					while (tabs) {
+						if (tabs[0].length < indent) {
+							indent = tabs[0].length;
+						}
+						tabs = findIndent.exec(code);
+					}
+
+					if (indent != Infinity) {
+						indentFind = new RegExp("^\\t{" + indent + "}", "gm");
+						code = code.replace(indentFind, replace);
+					}
+
+					return code;
+				};
+			})();
+			Syntax_layout.tabSize = (function () {
+				var space = " ", spaces = "    ",
+					find = /\t/g;
+
+				return function Syntax_tabSize(code, tabSize) {
+					if (tabSize < 0) { tabSize = 0; }
+					if (spaces.length != tabSize) {
+						spaces = new Array(tabSize + 1).join(space);
+					}
+
+					return code.replace(find, spaces);
+				};
+			})();
+
+			Syntax_layout.all = function (codes) {
+				return all(codes, Syntax_layout);
+			};
+
+			return Syntax_layout;
+		})();
+
+		Syntax.render = (function () {
+			var type;
+
+			function render(codeElement) {
+				type = codeElement.getAttribute("type");
+				codeElement.innerHTML = render.string(unescapeHTML(codeElement.innerHTML), type);
+			};
+			render.string = function (code, type) {
+				if ((type != null) && (typeof (Syntax[type]) === "function")) {
+					return Syntax[type](code);
+				}
+				else { return code; }
+			};
+			render.all = function (codes) {
+				all(codes, render);
+			};
+
+			return render;
+		})();
+
 
 		return Syntax;
 	})();
