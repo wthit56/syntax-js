@@ -122,7 +122,8 @@ if(!window.Syntax){
 The beauty of this way of extending Syntax's functionality is that it is completely 
 transferable, and doesn't necessarily need to be part of the Syntax library at all. You could 
 even feasibly port any other highlighter (perhaps even a non-js one) to work with Syntax.js with 
-minimal effort/re-writing.
+minimal effort/re-writing. You could even take one of these renderers and use it on the 
+server-side with node.js if you wish.
 
 
 ## TODOs
@@ -130,3 +131,4 @@ minimal effort/re-writing.
 - Syntax.js shouldn't automatically do things onload; this should be configurable in some way
 - Allow "justifying" code explicitly
 - Allow using Syntax to explicitly render a given `<code>` tag
+- Add comments to Syntax.js
