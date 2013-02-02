@@ -71,23 +71,29 @@ if (!window.Syntax) {
 		})();
 
 		Syntax.layout = (function () {
-			var newCode, spaces;
+			var newCode, justify, spaces;
 
 			function Syntax_layout(codeElement) {
 				newCode = codeElement.innerHTML;
 
-				if (codeElement.getAttribute("justify") != null) {
+				justify = codeElement.getAttribute("justify");
+				console.log(justify, Syntax.justify);
+				if (
+					((justify == null) && Syntax.justify)
+					|| ((justify != null) && (justify != "off"))
+				) {
 					newCode = Syntax.layout.justify(newCode);
 				}
 
 				spaces = codeElement.getAttribute("tab-size");
+				if (spaces == null) { spaces = Syntax.tabSize; }
+				else { spaces = +spaces; }
+
 				if (spaces != null) {
 					if (tabSize != null) {
-						console.log(tabSize, spaces);
 						codeElement.style[tabSize] = spaces;
 					}
 					else {
-						spaces = +spaces;
 						newCode = Syntax.layout.tabSize(newCode, spaces);
 					}
 				}
