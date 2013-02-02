@@ -10,23 +10,29 @@ The Syntax object contains the core functionality.
 
 ### Syntax(code, type)
 
+#### Code
 The `code` parameter should be a HTML Element, or a string.
 
-	If a HTML Element is passed in, its innerHTML is used to layout and highlight the content 
-	according to any of the Element's relevant properties.
+##### HTML Element
+If a HTML Element is passed in, its innerHTML is used to layout and highlight the content 
+according to any of the Element's relevant properties.
 
-		The `justify` attribute can be used in a number of ways: set to "on" or with no value at 
-		all, the content will be justified (see below); set to "off", the content will not be 
-		justified.
+The `justify` attribute can be used in a number of ways: set to "on" or with no value at 
+all, the content will be justified (see below); set to "off", the content will not be 
+justified.
 
-		The `tab-size` attribute will be used to set the tab width of the content in equivalent 
-		spaces, changing how any indented code will look after rendering.
+The `tab-size` attribute will be used to set the tab width of the content in equivalent 
+spaces, changing how any indented code will look after rendering.
 
-		The `type` attribute will be used to decide which syntax highlighter to use to render the 
-		content.
+The `type` attribute will be used to decide which syntax highlighter to use to render the 
+content.
 
-	If a string is passed in, it is used as the content. It will be justified and its tab-size 
-	changed according to the defaults set (see below).
+##### String
+
+If a string is passed in, it is used as the content. It will be justified and its tab-size 
+changed according to the defaults set (see below).
+
+#### Type
 
 The `type` parameter is optional, and should be a string. If a string was passed in, and a 
 corresponding renderer exists at the time of rendering, this renderer will be applied to the 
@@ -105,6 +111,6 @@ to the screen immediately, giving a minimum of "popin". Then (in most cases) all
 happen when rendering the syntax highlighting step will be that the code text changes colour, 
 etc., giving a nicer experience for the user.
 
-## Methods
+## Fine-grained Methods
 
 **TODO**
