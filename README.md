@@ -1,134 +1,110 @@
 # Syntax.js
 
 This project is aimed at providing a syntax-highlighting system that is modular, hackable, and 
-covers everything.
+flexible.
 
-The JavaScript language definition, for example, will take any JavaScript string and insert 
-spans around any and all tokens, including nested blocks, etc. This allows you to target any 
-JavaScript operator or keyword, or a group of keywords. The classnames decorating your source 
-code are also full and verbose, giving you the power to select any concieveable group of 
-language features you wish to, or select specific parts of the language with fine-grain 
-accuracy.
 
-## Syntax.js (file)
+## Syntax
 
-This file is the main, basic functionality of the highlighter. When the page loads, it will 
-loop through every `<code>` block on the page, cleaning up the general layout of the code itself 
-before any actual syntax-highlighting takes place where necessary (see **justify** below).
+The Syntax object contains the core functionality.
 
-The syntax-highlighting job itself is then scheduled to be run _after_ the clean-up step is 
-complete. This means that the effects of the clean-up won't be held up waiting for the more 
-heavy-duty highlighting step to finish up.
+### Syntax(code, type)
 
-Alternatively, you can use the Syntax object to explicitly render some code. All you need to do 
-is pass in the code to convert, and the "type" (or renderer name) to use to re-render it. This 
-will then return the newly-rendered code for you to insert into your page or what have you.
+The `code` parameter should be a HTML Element, or a string.
 
-Here's an example:
+	If a HTML Element is passed in, its innerHTML is used to layout and highlight the content 
+	according to any of the Element's relevant properties.
 
-```js
-var code = document.createElement("code");
-code.innerHTML = Syntax("console.log(true);", "text/javascript");
-document.body.appendChild(code);
-```
+		The `justify` attribute can be used in a number of ways: set to "on" or with no value at 
+		all, the content will be justified (see below); set to "off", the content will not be 
+		justified.
 
-> **NOTE:** You won't get any layout-fixing functionality if you explicitly use Syntax to 
-> highlight code.
+		The `tab-size` attribute will be used to set the tab width of the content in equivalent 
+		spaces, changing how any indented code will look after rendering.
 
-## Attributes
+		The `type` attribute will be used to decide which syntax highlighter to use to render the 
+		content.
 
-To configure how a block of code should be rendered, for layout and language selection, there 
-are a few attributes attributes you can add to the `<code>` tag.
+	If a string is passed in, it is used as the content. It will be justified and its tab-size 
+	changed according to the defaults set (see below).
 
-### type
+The `type` parameter is optional, and should be a string. If a string was passed in, and a 
+corresponding renderer exists at the time of rendering, this renderer will be applied to the 
+relevant code. If no type was passed in, then a `<code>` Element's `type` attribute will be 
+used. If no `type` attribute exists, or the code passed in was a string, then no renderer will 
+be used to syntax highlight the code at all.
 
-The first and most important of these is the _type_ attribute. This will let the 
-automatically-run Syntax renderer know which language the code should be highlighted as. So, if 
-the code is written in JavaScript, give the `<code>` tag the attribute `type="text/javascript"`; 
-just like a script or link tag.
+### Syntax defaults
 
-> This can have any value that matches a renderer that has been loaded into the Syntax object. 
-> If the value does not match a renderer, then the code in question will not be highlighted.
+`Syntax.justify` is a boolean, with an initial value of `true`. When a `<code>` HTML Element 
+does not have a `justify` attribute, this value will be used. If true, any code passed in as a 
+string will be justified (see below).
 
-### justify
+`Syntax.tabSize` is a number, with an initial value of 4. When a `<code>` HTML Element does not 
+have a `tab-size` attribute, this value will be used. Any code passed in as a string will use 
+this value to set it's tabs to the right width (see below).
 
-This attribute is referring to the code's layout, and if it should be tweaked to look it's best 
-before syntax-highlighting. When included in a tag, any leading and trailing whitespace will be 
-removed from the code. The overal indent of the code will also be removed.
+### Justification
 
-For example:
+A `<code>` Element's content may have extra indenting, and may start or end on a new line. This 
+can be because the code was inserted manually, and made to look nice in the HTML source, or 
+a CMS of some kind may have been used to render the HTML, and therefore may render it strangley 
+in some circumstances.
+
 ```html
-<code justify>
-	if(true){
-		console.log("justified");
-	}
+<code>
+	line 1
+		indented line 2
+	line 3
 </code>
 ```
-...would bcome:
-```html
-<code justify>if(true){
-	console.log("justified");
-}</code>
-```
 
-While this doesn't look so good once it's been "justified" like this, it fixes a few awkward 
-layout problems that are very tricky to solve with CSS alone. This means if you're working with 
-some framework that doesn't inject your code into the page while fixing such problems, or you 
-just like to have your HTML source nicer to look at, you can just stick the _justify_ attribute 
-on your `<code>` blocks and you'll be fine.
+The code above, for example, has an extra new line at the beginning and end of the content, and 
+the content itself has an unneeded indent to make it easier to read when looking at the source.
 
-> This attribute does not have a value. Simply write your HTML like so: `<code justify>`.
+This can be very tricky to fix with CSS alone, however, and fixing this problem by manipulating 
+the code in some way before-hand isn't ideal. When code is justified using Syntax.js, the 
+content is changed to make it behave nicely on the page.
 
-### tab-spaces
+### Tab Size
 
-Once your code has been "justified" (see above), your code should be much easier to look at. Now 
-you can use the CSS `tab-size` property to set the tabs in your code blocks to be your preferred 
-equivalent space-width. Unfortunately, older browsers, and even the latest IE it seems, does not 
-support this property, even with a vendor prefix. So with just CSS you're pretty much stuck with 
-the usual 8-space tab indents in your code.
+*[IDE]: Integrated Development Environment; generally an application for writing code
 
-If you add the _tab-spaces_ attribute to your `<code>` block, however, all this will be fixed. 
-Ever tab found in your code will be turned into the specified number of "non-breaking spaces"
-(&nbsp;, or just _spaces_ to the rest of us). This will ensure your tabs are displayed correctly 
-no matter the browser's support for the CSS property.
+Most IDEs give an option for setting the width of an indent or tab. This option usually allows 
+the user to set how many equivalent spaces each tab should be. There is a CSS property that 
+can let you do the same on any given element, but some browsers require vendor prefixes, and 
+some do not support the feature at all.
 
+When rendering code for a `<code>` Element, and the CSS feature is supported by the browser, 
+the HTML Element's style will be set to use the specified tab-size for it's content. If the 
+browser doesn't support the CSS property, all tabs will be converted into the specifies number 
+of spaces, giving the same result for all browsers.
 
-## Creating your own Syntax-highlighter
+	If the `tab-size` attribute on the `<code>` Element has a value that is not a number, and 
+	not the string "on", no tab sizing effect will be applied to the Element's content.
 
-To write your own syntax-highlighting for a given language, the process is very simple. First, 
-write a function that takes a string (the original "source" code), and returns a string (the 
-syntax-highlighting rendered version of the source). And then attach it directly to the Syntax 
-object as a property named after the "type" name.
+When rendering code for a code string spaces will always be used, as there is no HTML Element to 
+set the style on. You can, however, apply individual pieces of the Syntax.js functionality to 
+any given code, so if you do not want to convert the tabs into spaces, you can apply just the 
+justification and rendering methods to the code in question (see below).
 
-So for a JavaScript code renderer, simply write the following:
+### Rendering
 
-```js
-Syntax["text/javascript"] = function (input){
-	return "js-highlighting - " + input;
-};
-```
+If the code is to be rendered using a specified type (see above), and a corresponding renderer 
+exists at the time it should be rendered, the renderer will be applied to the code in question.
 
-Now, when the Syntax object is used to highlight any code, it can use your new highlighter to 
-render the code.
+### Scheduling
 
-You'll probably want to do a check to make sure the Syntax object is there before writing to it:
+The rendering of code into a syntax highlighted form can be heavy-duty work, and therefore could 
+hold up the rendering of the layout (justification and tab-sizing) steps. For this reason, when 
+some code would undergo layout and rendering changes, the layout is processed immediately, and 
+the rendering is sheduled for soon after.
 
-```js
-if(!window.Syntax){
-	window.Syntax = { };
-}
-```
+By shceduling this heavier work as a separate event, the page should render the layout changes 
+to the screen immediately, giving a minimum of "popin". Then (in most cases) all that will 
+happen when rendering the syntax highlighting step will be that the code text changes colour, 
+etc., giving a nicer experience for the user.
 
-The beauty of this way of extending Syntax's functionality is that it is completely 
-transferable, and doesn't necessarily need to be part of the Syntax library at all. You could 
-even feasibly port any other highlighter (perhaps even a non-js one) to work with Syntax.js with 
-minimal effort/re-writing. You could even take one of these renderers and use it on the 
-server-side with node.js if you wish.
+## Methods
 
-
-## TODOs
-
-- Syntax.js shouldn't automatically do things onload; this should be configurable in some way
-- Allow "justifying" code explicitly
-- Allow using Syntax to explicitly render a given `<code>` tag
-- Add comments to Syntax.js
+**TODO**

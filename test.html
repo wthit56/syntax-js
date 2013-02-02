@@ -5,9 +5,7 @@
         <meta charset="utf-8" />
         <title></title>
 		<style type="text/css">
-  	code {
-		  white-space:pre; display: block; margin: 2em 0;
-  	}
+  			code {white-space:pre; display:block; margin:2em 0;}
 		</style>
     </head>
     <body>
@@ -35,6 +33,8 @@
   		Syntax.justify = false;
   		Syntax.tabSize = 4;
   		Syntax.all();
+
+  		document.body.appendChild(document.createElement("CODE")).innerHTML = Syntax("line 1\n\tindented line 2\nline 3");
   	}
   	if (window.addEventListener) { window.addEventListener("load", load); }
   	if (window.attachEvent) { window.attachEvent("onload", load); }

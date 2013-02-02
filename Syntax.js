@@ -34,9 +34,9 @@ if (!window.Syntax) {
 			};
 		})();
 
-		function queueRenderJob(codeElement) {
+		function queueRenderJob(codeElement, type) {
 			return setTimeout(function () {
-				Syntax.render(codeElement);
+				Syntax.render(codeElement, type);
 			}, 0);
 		}
 
@@ -50,13 +50,15 @@ if (!window.Syntax) {
 				if ((codeType === "object") && (code.getAttribute)) {
 					if (code.getAttribute) {
 						Syntax.layout(code);
-						queueRenderJob(code);
+						queueRenderJob(code, type);
 						return;
 					}
 				}
 				else if (codeType === "string") {
+					if (Syntax.justify) { code = Syntax.layout.justify(code); }
+					if (Syntax.tabSize != null) { code = Syntax.layout.tabSize(code); }
+
 					if (type != null) {
-						code = Syntax.layout.justify(code);
 						return Syntax.render.string(code, type);
 					}
 					else { return code; }
@@ -86,8 +88,9 @@ if (!window.Syntax) {
 				}
 
 				spaces = codeElement.getAttribute("tab-size");
-				if (spaces == null) { spaces = Syntax.tabSize; }
-				else { spaces = +spaces; }
+				if ((spaces == null) || (spaces === "on")) { spaces = Syntax.tabSize; }
+				else if (!isNaN(spaces)) { spaces = +spaces; }
+				else { spaces = null; }
 
 				if (spaces != null) {
 					if (tabSize != null) {
@@ -132,6 +135,7 @@ if (!window.Syntax) {
 					find = /\t/g;
 
 				return function Syntax_tabSize(code, tabSize) {
+					if (tabSize == null) { tabSize = Syntax.tabSize; }
 					if (tabSize < 0) { tabSize = 0; }
 					if (spaces.length != tabSize) {
 						spaces = new Array(tabSize + 1).join(space);
@@ -151,8 +155,8 @@ if (!window.Syntax) {
 		Syntax.render = (function () {
 			var type;
 
-			function render(codeElement) {
-				type = codeElement.getAttribute("type");
+			function render(codeElement, type) {
+				type = type || codeElement.getAttribute("type");
 				codeElement.innerHTML = render.string(unescapeHTML(codeElement.innerHTML), type);
 			};
 			render.string = function (code, type) {
