@@ -35,7 +35,6 @@ window.Syntax["text/javascript"] = (function () {
 				);
 
 				return function (match, left, content, right) {
-					debugger;
 					return template.replace("{left}", left).replace("{content}", content).replace("{right}", Text(right));
 				};
 			})()

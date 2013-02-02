@@ -83,6 +83,7 @@ if (!window.Syntax) {
 				spaces = codeElement.getAttribute("tab-size");
 				if (spaces != null) {
 					if (tabSize != null) {
+						console.log(tabSize, spaces);
 						codeElement.style[tabSize] = spaces;
 					}
 					else {
@@ -94,42 +95,6 @@ if (!window.Syntax) {
 				codeElement.innerHTML = newCode;
 				newCode = "";
 			};
-
-			//			var removeIndent = (function () {
-			//	var shortestIndent = -1, tabs = /^(\t*)\S/gm, match,
-			//				find = /[\w\W]*/g, replace = "";
-
-			//	return function removeIndent() {
-			//		shortestIndent = -1, tabs.lastIndex = 0;
-			//		match = tabs.exec(this);
-			//		while (match) {
-			//			if ((shortestIndent < 0) || (shortestIndent > match[0].length)) {
-			//				shortestIndent = match[1].length;
-			//			}
-			//			match = tabs.exec(this);
-			//		}
-			//		find = new RegExp("^\\t{" + shortestIndent + "}", "gm");
-			//		return this.replace(find, replace);
-			//	};
-			//})();
-
-			//var trimLines = (function () {
-			//	var find = /^[^\S\t]*|\s*$/g, replace = "";
-
-			//	return function trimLines() {
-			//		return this.replace(find, replace);
-			//	};
-			//})();
-
-			//var useSpaces = (function () {
-			//	var find = /\t/g, replace = "    ";
-
-			//	return function useSpaces(tabWidth) {
-			//		if (tabWidth == null) { tabWidth = 4; }
-			//		if (replace.length != tabWidth) { replace = new Array(tabWidth + 1).join(" "); }
-			//		return this.replace(find, replace);
-			//	};
-			//})();
 
 			Syntax_layout.justify = (function () {
 				var find = /^[^\S\t]*|\s*$/g, replace = "";
@@ -197,6 +162,8 @@ if (!window.Syntax) {
 			return render;
 		})();
 
+		Syntax.justify = false;
+		Syntax.tabSize = null;
 
 		return Syntax;
 	})();
